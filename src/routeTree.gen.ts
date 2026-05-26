@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TodayRouteImport } from './routes/today'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ReflectRouteImport } from './routes/reflect'
 import { Route as CanvasRouteImport } from './routes/canvas'
 import { Route as IndexRouteImport } from './routes/index'
@@ -18,6 +19,11 @@ import { Route as GoalsIdRouteImport } from './routes/goals.$id'
 const TodayRoute = TodayRouteImport.update({
   id: '/today',
   path: '/today',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ReflectRoute = ReflectRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/today': typeof TodayRoute
   '/goals/$id': typeof GoalsIdRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/today': typeof TodayRoute
   '/goals/$id': typeof GoalsIdRoute
 }
@@ -60,21 +68,36 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/today': typeof TodayRoute
   '/goals/$id': typeof GoalsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
+  fullPaths:
+    | '/'
+    | '/canvas'
+    | '/reflect'
+    | '/sitemap.xml'
+    | '/today'
+    | '/goals/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
-  id: '__root__' | '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
+  to: '/' | '/canvas' | '/reflect' | '/sitemap.xml' | '/today' | '/goals/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/canvas'
+    | '/reflect'
+    | '/sitemap.xml'
+    | '/today'
+    | '/goals/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CanvasRoute: typeof CanvasRoute
   ReflectRoute: typeof ReflectRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TodayRoute: typeof TodayRoute
   GoalsIdRoute: typeof GoalsIdRoute
 }
@@ -86,6 +109,13 @@ declare module '@tanstack/react-router' {
       path: '/today'
       fullPath: '/today'
       preLoaderRoute: typeof TodayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reflect': {
@@ -123,9 +153,20 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CanvasRoute: CanvasRoute,
   ReflectRoute: ReflectRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   TodayRoute: TodayRoute,
   GoalsIdRoute: GoalsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
