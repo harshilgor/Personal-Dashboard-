@@ -13,6 +13,7 @@ import { Route as TodayRouteImport } from './routes/today'
 import { Route as ReflectRouteImport } from './routes/reflect'
 import { Route as CanvasRouteImport } from './routes/canvas'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GoalsIdRouteImport } from './routes/goals.$id'
 
 const TodayRoute = TodayRouteImport.update({
   id: '/today',
@@ -34,18 +35,25 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GoalsIdRoute = GoalsIdRouteImport.update({
+  id: '/goals/$id',
+  path: '/goals/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
   '/today': typeof TodayRoute
+  '/goals/$id': typeof GoalsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
   '/today': typeof TodayRoute
+  '/goals/$id': typeof GoalsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,14 @@ export interface FileRoutesById {
   '/canvas': typeof CanvasRoute
   '/reflect': typeof ReflectRoute
   '/today': typeof TodayRoute
+  '/goals/$id': typeof GoalsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/canvas' | '/reflect' | '/today'
+  fullPaths: '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/canvas' | '/reflect' | '/today'
-  id: '__root__' | '/' | '/canvas' | '/reflect' | '/today'
+  to: '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
+  id: '__root__' | '/' | '/canvas' | '/reflect' | '/today' | '/goals/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,6 +76,7 @@ export interface RootRouteChildren {
   CanvasRoute: typeof CanvasRoute
   ReflectRoute: typeof ReflectRoute
   TodayRoute: typeof TodayRoute
+  GoalsIdRoute: typeof GoalsIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -99,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/goals/$id': {
+      id: '/goals/$id'
+      path: '/goals/$id'
+      fullPath: '/goals/$id'
+      preLoaderRoute: typeof GoalsIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -107,6 +124,7 @@ const rootRouteChildren: RootRouteChildren = {
   CanvasRoute: CanvasRoute,
   ReflectRoute: ReflectRoute,
   TodayRoute: TodayRoute,
+  GoalsIdRoute: GoalsIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
