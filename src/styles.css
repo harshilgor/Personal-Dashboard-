@@ -105,6 +105,48 @@
   --sidebar-ring: oklch(0.82 0.17 86 / 0.45);
 }
 
+/* Aesthetic light mode — warm paper, deep ink, subdued amber accent. */
+:root.light {
+  --background: oklch(0.985 0.004 80);          /* warm off-white */
+  --foreground: oklch(0.22 0.01 80);            /* near-black ink */
+  --surface: oklch(0.965 0.006 80);             /* faint cream card */
+  --surface-2: oklch(0.93 0.008 80);            /* warmer panel */
+  --card: oklch(0.97 0.006 80);
+  --card-foreground: oklch(0.22 0.01 80);
+  --popover: oklch(0.985 0.004 80);
+  --popover-foreground: oklch(0.22 0.01 80);
+  --primary: oklch(0.22 0.01 80);
+  --primary-foreground: oklch(0.985 0.004 80);
+  --secondary: oklch(0.93 0.008 80);
+  --secondary-foreground: oklch(0.22 0.01 80);
+  --muted: oklch(0.93 0.008 80);
+  --muted-foreground: oklch(0.5 0.015 80);
+  --accent: oklch(0.62 0.16 60);                /* burnished amber */
+  --accent-foreground: oklch(0.985 0.004 80);
+  --brand: oklch(0.62 0.16 60);
+  --brand-soft: oklch(0.62 0.16 60 / 0.15);
+  --success: oklch(0.55 0.15 152);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.985 0.004 80);
+  --border: oklch(0.88 0.008 80);
+  --border-strong: oklch(0.78 0.01 80);
+  --input: oklch(0.88 0.008 80);
+  --ring: oklch(0.62 0.16 60 / 0.45);
+  --chart-1: oklch(0.62 0.16 60);
+  --chart-2: oklch(0.55 0.15 152);
+  --chart-3: oklch(0.5 0.18 250);
+  --chart-4: oklch(0.6 0.2 25);
+  --chart-5: oklch(0.55 0.13 200);
+  --sidebar: oklch(0.985 0.004 80);
+  --sidebar-foreground: oklch(0.22 0.01 80);
+  --sidebar-primary: oklch(0.62 0.16 60);
+  --sidebar-primary-foreground: oklch(0.985 0.004 80);
+  --sidebar-accent: oklch(0.93 0.008 80);
+  --sidebar-accent-foreground: oklch(0.22 0.01 80);
+  --sidebar-border: oklch(0.88 0.008 80);
+  --sidebar-ring: oklch(0.62 0.16 60 / 0.45);
+}
+
 @layer base {
   * {
     border-color: var(--color-border);
@@ -129,6 +171,9 @@
   .canvas-dots {
     background-image: radial-gradient(circle, oklch(0.3 0.005 285 / 0.5) 1px, transparent 1px);
     background-size: 24px 24px;
+  }
+  :root.light .canvas-dots {
+    background-image: radial-gradient(circle, oklch(0.78 0.01 80 / 0.9) 1px, transparent 1px);
   }
   .label-eyebrow {
     font-family: var(--font-mono);
