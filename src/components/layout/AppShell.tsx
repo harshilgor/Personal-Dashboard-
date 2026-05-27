@@ -1,6 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Compass, LayoutGrid, ListChecks, LineChart, Command } from "lucide-react";
-import type { ReactNode } from "react";
+import { Compass, LayoutGrid, ListChecks, LineChart, Command, Sun, Moon } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const nav = [
   { to: "/", label: "Home", icon: LayoutGrid, hint: "G H" },
@@ -20,6 +20,28 @@ function pathLabel(p: string) {
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+
+  useEffect(() => {
+    const stored = (typeof window !== "undefined" && localStorage.getItem("trajectory.theme")) as
+      | "dark"
+      | "light"
+      | null;
+    const initial = stored ?? "dark";
+    setTheme(initial);
+    document.documentElement.classList.toggle("light", initial === "light");
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.classList.toggle("light", next === "light");
+    try {
+      localStorage.setItem("trajectory.theme", next);
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground antialiased overflow-hidden">
@@ -69,6 +91,20 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="label-eyebrow">{pathLabel(pathname)}</span>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              className="flex items-center gap-2 px-3 py-1 bg-surface/60 border border-border rounded-md hover:border-border-strong transition"
+            >
+              {theme === "dark" ? (
+                <Sun className="size-3 text-muted-foreground" strokeWidth={1.6} />
+              ) : (
+                <Moon className="size-3 text-muted-foreground" strokeWidth={1.6} />
+              )}
+              <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">
+                {theme === "dark" ? "Light" : "Dark"}
+              </span>
+            </button>
             <div className="flex items-center gap-2 px-3 py-1 bg-surface/60 border border-border rounded-md">
               <Command className="size-3 text-muted-foreground" strokeWidth={1.6} />
               <span className="text-[10px] font-mono text-muted-foreground tracking-widest uppercase">

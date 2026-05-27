@@ -1,6 +1,8 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type { NodeStatus, NodeType } from "@/lib/types";
+import { useEffect, useRef } from "react";
+import { useTrajectory } from "@/lib/store";
 
 export interface TrajectoryNodeData {
   title: string;
@@ -10,6 +12,7 @@ export interface TrajectoryNodeData {
   due_date?: string;
   effort?: string;
   selected?: boolean;
+  editing?: boolean;
   [key: string]: unknown;
 }
 
@@ -27,8 +30,20 @@ const statusLabel: Record<NodeStatus, string> = {
   blocked: "BLOCKED",
 };
 
-export function TrajectoryNode({ data, selected }: NodeProps) {
+export function TrajectoryNode({ id, data, selected }: NodeProps) {
   const d = data as TrajectoryNodeData;
+  const editing = !!d.editing;
+  const updateNode = useTrajectory((s) => s.updateNode);
+  const setEditing = useTrajectory((s) => s.setEditingNode);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
   const isFuture = d.status === "todo" && d.type === "idea";
   return (
     <div
@@ -57,13 +72,34 @@ export function TrajectoryNode({ data, selected }: NodeProps) {
           <span className="size-2 bg-brand rounded-full animate-pulse" />
         )}
       </div>
-      <h3
-        className={`${
-          selected ? "text-lg font-serif italic" : "text-sm font-medium"
-        } text-foreground leading-tight`}
-      >
-        {d.title}
-      </h3>
+      {editing ? (
+        <input
+          ref={inputRef}
+          defaultValue={d.title}
+          onChange={(e) => updateNode(id, { title: e.target.value })}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              setEditing(null);
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              setEditing(null);
+            }
+            e.stopPropagation();
+          }}
+          onBlur={() => setEditing(null)}
+          className="w-full bg-transparent text-lg font-serif italic text-foreground border-b border-brand/60 focus:outline-none focus:border-brand"
+          placeholder="Name this node…"
+        />
+      ) : (
+        <h3
+          className={`${
+            selected ? "text-lg font-serif italic" : "text-sm font-medium"
+          } text-foreground leading-tight`}
+        >
+          {d.title || <span className="text-muted-foreground italic">Untitled</span>}
+        </h3>
+      )}
       {selected && d.description && (
         <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
           {d.description}
