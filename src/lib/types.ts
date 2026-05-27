@@ -74,3 +74,13 @@ export interface MetricEntry {
   value: number;
   date: string; // YYYY-MM-DD
 }
+
+export interface TimeEntry {
+  id: string;
+  task_id?: string;
+  goal_id?: string;
+  label: string;
+  minutes: number;
+  date: string; // YYYY-MM-DD
+  created_at: string;
+}
