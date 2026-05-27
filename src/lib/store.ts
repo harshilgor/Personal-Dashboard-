@@ -7,6 +7,7 @@ import type {
   MetricEntry,
   RoadmapNode,
   Task,
+  TimeEntry,
 } from "./types";
 
 const now = () => new Date().toISOString();
@@ -20,11 +21,14 @@ interface State {
   tasks: Task[];
   journal: JournalEntry[];
   metrics: MetricEntry[];
+  timeEntries: TimeEntry[];
   selectedNodeId: string | null;
+  editingNodeId: string | null;
   focusTaskId: string | null;
   streakDays: number;
 
   setSelectedNode: (id: string | null) => void;
+  setEditingNode: (id: string | null) => void;
   setFocusTask: (id: string | null) => void;
 
   addGoal: (g: Partial<Goal>) => Goal;
@@ -47,6 +51,8 @@ interface State {
   addJournal: (j: Partial<JournalEntry>) => JournalEntry;
 
   logMetric: (type: string, value: number) => void;
+  logTime: (entry: Omit<TimeEntry, "id" | "created_at" | "date"> & { date?: string }) => TimeEntry;
+  removeTimeEntry: (id: string) => void;
 }
 
 // ---- Seed data --------------------------------------------------------------
@@ -249,6 +255,36 @@ const seedMetrics: MetricEntry[] = (() => {
   return arr;
 })();
 
+const seedTimeEntries: TimeEntry[] = (() => {
+  const arr: TimeEntry[] = [];
+  const buckets: { label: string; goal_id: string; task_id?: string; base: number }[] = [
+    { label: "Deep work: neural architecture", goal_id: "g_research", task_id: "t1", base: 90 },
+    { label: "Reading & research", goal_id: "g_research", task_id: "t2", base: 40 },
+    { label: "Training block", goal_id: "g_physical", task_id: "t3", base: 55 },
+    { label: "OSS primitive design", goal_id: "g_legacy", task_id: "t4", base: 35 },
+    { label: "Journal & reflection", goal_id: "g_research", base: 15 },
+  ];
+  for (let i = 0; i < 35; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const date = d.toISOString().slice(0, 10);
+    buckets.forEach((b, bi) => {
+      if (Math.random() > 0.25) {
+        arr.push({
+          id: `te_${i}_${bi}`,
+          label: b.label,
+          goal_id: b.goal_id,
+          task_id: b.task_id,
+          minutes: Math.round(b.base * (0.6 + Math.random() * 0.9)),
+          date,
+          created_at: d.toISOString(),
+        });
+      }
+    });
+  }
+  return arr;
+})();
+
 // ---- Store ------------------------------------------------------------------
 
 export const useTrajectory = create<State>()(
@@ -260,11 +296,14 @@ export const useTrajectory = create<State>()(
       tasks: seedTasks,
       journal: seedJournal,
       metrics: seedMetrics,
+      timeEntries: seedTimeEntries,
       selectedNodeId: "n_neural",
+      editingNodeId: null,
       focusTaskId: "t1",
       streakDays: 142,
 
       setSelectedNode: (id) => set({ selectedNodeId: id }),
+      setEditingNode: (id) => set({ editingNodeId: id }),
       setFocusTask: (id) => set({ focusTaskId: id }),
 
       addGoal: (g) => {
@@ -390,7 +429,23 @@ export const useTrajectory = create<State>()(
             ...get().metrics,
           ],
         }),
+
+      logTime: (entry) => {
+        const te: TimeEntry = {
+          id: id(),
+          task_id: entry.task_id,
+          goal_id: entry.goal_id,
+          label: entry.label,
+          minutes: entry.minutes,
+          date: entry.date ?? today(),
+          created_at: now(),
+        };
+        set({ timeEntries: [te, ...get().timeEntries] });
+        return te;
+      },
+      removeTimeEntry: (tid) =>
+        set({ timeEntries: get().timeEntries.filter((t) => t.id !== tid) }),
     }),
-    { name: "trajectory.v1" },
+    { name: "trajectory.v2" },
   ),
 );
