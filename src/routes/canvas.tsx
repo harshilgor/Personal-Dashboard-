@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -13,6 +13,8 @@ import {
   type Connection,
   ConnectionMode,
   MarkerType,
+  useReactFlow,
+  ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { TrajectoryNode } from "@/components/canvas/TrajectoryNode";
@@ -22,16 +24,26 @@ import { Plus, X } from "lucide-react";
 import type { NodeType } from "@/lib/types";
 
 export const Route = createFileRoute("/canvas")({
-  component: CanvasPage,
+  component: CanvasPageWrapper,
 });
 
 const nodeTypes = { trajectory: TrajectoryNode };
+
+function CanvasPageWrapper() {
+  return (
+    <ReactFlowProvider>
+      <CanvasPage />
+    </ReactFlowProvider>
+  );
+}
 
 function CanvasPage() {
   const nodes = useTrajectory((s) => s.nodes);
   const edges = useTrajectory((s) => s.edges);
   const selectedId = useTrajectory((s) => s.selectedNodeId);
   const setSelected = useTrajectory((s) => s.setSelectedNode);
+  const editingId = useTrajectory((s) => s.editingNodeId);
+  const setEditing = useTrajectory((s) => s.setEditingNode);
   const moveNode = useTrajectory((s) => s.moveNode);
   const addEdgeFn = useTrajectory((s) => s.addEdge);
   const removeEdgeFn = useTrajectory((s) => s.removeEdge);
@@ -39,6 +51,7 @@ function CanvasPage() {
   const removeNodeFn = useTrajectory((s) => s.removeNode);
   const updateNode = useTrajectory((s) => s.updateNode);
   const goals = useTrajectory((s) => s.goals);
+  const rf = useReactFlow();
 
   const rfNodes: Node[] = useMemo(
     () =>
@@ -53,10 +66,11 @@ function CanvasPage() {
           status: n.status,
           due_date: n.due_date,
           effort: n.estimated_effort,
+          editing: n.id === editingId,
         },
         selected: n.id === selectedId,
       })),
-    [nodes, selectedId],
+    [nodes, selectedId, editingId],
   );
 
   const rfEdges: Edge[] = useMemo(
@@ -125,6 +139,59 @@ function CanvasPage() {
 
   const selected = nodes.find((n) => n.id === selectedId) ?? null;
 
+  // Keyboard shortcuts
+  const addNodeAtCenter = useCallback(() => {
+    let x = 0;
+    let y = 0;
+    try {
+      const c = rf.screenToFlowPosition({
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2,
+      });
+      x = c.x;
+      y = c.y;
+    } catch {
+      /* not ready */
+    }
+    const n = addNodeFn({
+      title: "",
+      type: "idea",
+      position_x: x,
+      position_y: y,
+    });
+    setSelected(n.id);
+    setEditing(n.id);
+  }, [rf, addNodeFn, setSelected, setEditing]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const inField =
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        (target?.isContentEditable ?? false);
+      if (inField) return;
+
+      if (e.key === "a" || e.key === "A") {
+        e.preventDefault();
+        addNodeAtCenter();
+      } else if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        e.preventDefault();
+        removeNodeFn(selectedId);
+      } else if (e.key === "Escape") {
+        setEditing(null);
+        setSelected(null);
+      } else if (e.key === "Enter" && selectedId && !editingId) {
+        e.preventDefault();
+        setEditing(selectedId);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [addNodeAtCenter, selectedId, editingId, removeNodeFn, setEditing, setSelected]);
+
   return (
     <div className="flex h-full overflow-hidden">
       {/* Canvas */}
@@ -135,8 +202,15 @@ function CanvasPage() {
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
           onConnect={onConnect}
-          onNodeClick={(_, n) => setSelected(n.id)}
-          onPaneClick={() => setSelected(null)}
+          onNodeClick={(_, n) => {
+            setSelected(n.id);
+            if (editingId && editingId !== n.id) setEditing(null);
+          }}
+          onNodeDoubleClick={(_, n) => setEditing(n.id)}
+          onPaneClick={() => {
+            setSelected(null);
+            setEditing(null);
+          }}
           onEdgesDelete={(es) => es.forEach((e) => removeEdgeFn(e.id))}
           fitView
           fitViewOptions={{ padding: 0.4, maxZoom: 1 }}
@@ -165,14 +239,7 @@ function CanvasPage() {
 
         {/* Add node FAB */}
         <button
-          onClick={() =>
-            addNodeFn({
-              title: "New node",
-              type: "idea",
-              position_x: 0,
-              position_y: 0,
-            })
-          }
+          onClick={addNodeAtCenter}
           className="absolute top-6 left-6 z-10 flex items-center gap-2 px-3 py-1.5 bg-surface/80 backdrop-blur border border-border rounded-md text-xs font-mono uppercase tracking-widest text-foreground/80 hover:text-foreground hover:border-border-strong transition"
         >
           <Plus className="size-3" />
@@ -184,7 +251,7 @@ function CanvasPage() {
           {[
             ["V", "SELECT"],
             ["A", "ADD NODE"],
-            ["SPACE", "PAN"],
+            ["⏎", "RENAME"],
             ["DEL", "REMOVE"],
           ].map(([k, l]) => (
             <div
